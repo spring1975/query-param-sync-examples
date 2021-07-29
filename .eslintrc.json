@@ -1,0 +1,125 @@
+{
+    "root": true,
+    "ignorePatterns": ["projects/**/*"],
+    "overrides": [
+        {
+            "files": ["*.ts"],
+            "parserOptions": {
+                "project": ["tsconfig.json"],
+                "createDefaultProgram": true
+            },
+            "extends": [
+                "plugin:@angular-eslint/ng-cli-compat",
+                "plugin:@angular-eslint/ng-cli-compat--formatting-add-on",
+                "plugin:@angular-eslint/template/process-inline-templates"
+            ],
+            "rules": {
+                "@angular-eslint/component-class-suffix": [
+                    "error",
+                    {
+                        "suffixes": ["Component"]
+                    }
+                ],
+                "@angular-eslint/component-max-inline-declarations": "error",
+                "@angular-eslint/component-selector": [
+                    "error",
+                    {
+                        "type": "element",
+                        "prefix": ["locums", "aya"],
+                        "style": "kebab-case"
+                    }
+                ],
+                "@angular-eslint/directive-class-suffix": [
+                    "error",
+                    {
+                        "suffixes": ["Directive"]
+                    }
+                ],
+                "@angular-eslint/directive-selector": [
+                    "error",
+                    {
+                        "type": "attribute",
+                        "prefix": ["locums", "aya"],
+                        "style": "camelCase"
+                    }
+                ],
+                "@angular-eslint/no-attribute-decorator": "error",
+                "@angular-eslint/no-forward-ref": "off",
+                "@angular-eslint/no-lifecycle-call": "error",
+                "@angular-eslint/no-pipe-impure": "error",
+                "@angular-eslint/no-queries-metadata-property": "error",
+                "@angular-eslint/prefer-output-readonly": "error",
+                "@angular-eslint/use-component-selector": "error",
+                "@angular-eslint/use-component-view-encapsulation": "error",
+                "@typescript-eslint/explicit-member-accessibility": [
+                    "off",
+                    {
+                        "accessibility": "explicit"
+                    }
+                ],
+                "@typescript-eslint/naming-convention": [
+                    "error",
+                    {
+                        "selector": "enum",
+                        "format": ["PascalCase"]
+                    }
+                ],
+                "@typescript-eslint/no-empty-interface": [
+                    "error",
+                    {
+                        "allowSingleExtends": true
+                    }
+                ],
+                "arrow-parens": ["off", "always"],
+                "import/order": "off",
+                "no-unused-vars": [
+                    "error",
+                    {
+                        "vars": "all",
+                        "args": "after-used",
+                        "ignoreRestSiblings": false,
+                        "argsIgnorePattern": "^_"
+                    }
+                ],
+                "no-underscore-dangle": "off"
+            }
+        },
+        {
+            "files": ["*.html"],
+            "extends": ["plugin:@angular-eslint/template/recommended"],
+            "rules": {
+                "@angular-eslint/template/conditional-complexity": "error",
+                "@angular-eslint/template/cyclomatic-complexity": [
+                    "off",
+                    {
+                        "maxComplexity": 5
+                    }
+                ],
+                "@angular-eslint/template/no-negated-async": "off",
+                "@angular-eslint/template/use-track-by-function": "warn"
+            }
+        },
+        {
+            "files": ["*.spec.ts"],
+            "env": { "jasmine": true },
+            "extends": "plugin:jasmine/recommended",
+            "plugins": ["jasmine"],
+            "rules": {
+                "@angular-eslint/component-selector": [
+                    "error",
+                    {
+                        "type": "element",
+                        "prefix": ["", "test"],
+                        "style": "kebab-case"
+                    }
+                ],
+                "func-names": "off",
+                "prefer-arrow-callback": "off",
+                "jasmine/no-unsafe-spy": "off",
+                "jasmine/prefer-toHaveBeenCalledWith": "off",
+                "one-var": ["error", { "uninitialized": "consecutive" }],
+                "one-var-declaration-per-line": ["error", "initializations"]
+            }
+        }
+    ]
+}
