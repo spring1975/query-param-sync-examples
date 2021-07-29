@@ -1,16 +1,17 @@
-import { NgModule } from "@angular/core";
-import { BrowserModule } from "@angular/platform-browser";
-import { FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { AppComponent } from "./app.component";
-import { RouterModule } from "@angular/router";
-import { MatSlideToggleModule } from "@angular/material/slide-toggle";
-import { CustomInputComponent } from "./custom-input/custom-input.component";
-import { MatAutocompleteModule } from "@angular/material/autocomplete";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatInputModule } from "@angular/material/input";
-import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
-import { QueryParamSyncModule } from "./query-param-sync/query-param-sync.module";
+import { AppComponent } from './app.component';
+import { RouterModule } from '@angular/router';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { CustomInputComponent } from './custom-input/custom-input.component';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { QueryParamSyncModule } from './query-param-sync/query-param-sync.module';
+import { ENV, getEnv } from 'src/environments/environment.provider';
 
 @NgModule({
   imports: [
@@ -26,11 +27,15 @@ import { QueryParamSyncModule } from "./query-param-sync/query-param-sync.module
     QueryParamSyncModule
   ],
   declarations: [AppComponent, CustomInputComponent],
+  providers: [
+    { provide: ENV, useFactory: getEnv },
+
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {}
 
-/* 
+/*
 Going forward:
 - QueryParamSyncModule.forRoot({
   paging: {

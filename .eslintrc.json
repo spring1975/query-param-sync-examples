@@ -25,7 +25,7 @@
                     "error",
                     {
                         "type": "element",
-                        "prefix": ["locums", "aya"],
+                        "prefix": [""],
                         "style": "kebab-case"
                     }
                 ],
@@ -39,7 +39,7 @@
                     "error",
                     {
                         "type": "attribute",
-                        "prefix": ["locums", "aya"],
+                        "prefix": [""],
                         "style": "camelCase"
                     }
                 ],

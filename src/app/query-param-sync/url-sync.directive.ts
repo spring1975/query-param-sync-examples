@@ -6,35 +6,35 @@ import {
   ElementRef,
   Inject,
   Optional,
-  SkipSelf,
   Renderer2,
-  SimpleChange
-} from "@angular/core";
-import { Router, ActivatedRoute } from "@angular/router";
-import { Subscription } from "rxjs";
-import { map, filter, distinctUntilKeyChanged, tap } from "rxjs/operators";
+  SimpleChange,
+  OnDestroy
+} from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { map, distinctUntilKeyChanged } from 'rxjs/operators';
 import {
   NG_VALUE_ACCESSOR,
   ControlValueAccessor,
-  ControlContainer,
   NgControl,
   FormControl,
   AbstractControlDirective,
   DefaultValueAccessor,
   FormControlDirective,
-  NgModel,
-  FormGroupDirective,
-  FormControlName,
-  FormGroup,
   CheckboxControlValueAccessor,
   RangeValueAccessor,
   NumberValueAccessor,
   SelectControlValueAccessor,
   SelectMultipleControlValueAccessor,
   RadioControlValueAccessor
-} from "@angular/forms";
+} from '@angular/forms';
 
-const serializers = {
+interface Serialization {
+  serialize: (val: any) => any;
+  deserialize: (val: any) => any;
+}
+
+const serializers: { [K: string]: Serialization } = {
   dates: {
     serialize: (val: any) => val,
     deserialize: (val: any) => ({ start: val.start, end: val.end })
@@ -46,23 +46,25 @@ const serializers = {
 };
 
 @Directive({
-  selector: "[urlSync]"
+  selector: '[urlSync]'
 })
-export class UrlSyncDirective extends FormControlDirective implements OnInit {
-  private _subscription: Subscription;
+export class UrlSyncDirective extends FormControlDirective implements OnInit, OnDestroy {
 
-  @Input("urlSync") paramName;
-
-  @HostListener("input", ["$event.target.value"]) keyup(value: any) {
-    if (!this.controls) {
-      this.router.navigate([], {
-        queryParams: { [this.paramName]: value || null },
-        queryParamsHandling: "merge"
-      });
-    }
+  @Input('urlSync')
+  get paramName() {
+    throw new Error('Attribute "paramName" is required');
+  }
+  set paramName(value: string) {
+    Object.defineProperty(this, 'paramName', {
+      value,
+      writable: true,
+      configurable: true,
+    });
   }
 
   form = new FormControl('');
+
+  private readonly _subscription: Subscription = new Subscription();
 
   constructor(
     private readonly router: Router,
@@ -73,109 +75,130 @@ export class UrlSyncDirective extends FormControlDirective implements OnInit {
     @Inject(NG_VALUE_ACCESSOR)
     private readonly controls: ControlValueAccessor[]
   ) {
-    super([], [], controls, "");
+    super([], [], controls, '');
     if (controls) {
       this.valueAccessor = selectValueAccessor(this, this.controls);
+      if (this.valueAccessor) {
         const changeFn = this.valueAccessor.registerOnChange.bind(this.valueAccessor);
         this.valueAccessor.registerOnChange = (fn: any) => {
           const f = (val: any) => {
             const value = serializers[this.paramName].serialize(val);
             this.router.navigate([], {
               queryParams: { ...value },
-              queryParamsHandling: "merge"
+              queryParamsHandling: 'merge'
             });
             fn(val);
           };
           changeFn(f);
         };
-        this.ngOnChanges({ form: new SimpleChange("", this.form, false) });
+      }
+      // eslint-disable-next-line @angular-eslint/no-lifecycle-call
+      this.ngOnChanges({ form: new SimpleChange('', this.form, false) });
+    }
+  }
+
+  @HostListener('input', ['$event.target.value']) keyup(value: any) {
+    if (!this.controls) {
+      this.router.navigate([], {
+        queryParams: { [this.paramName]: value || null },
+        queryParamsHandling: 'merge'
+      });
     }
   }
 
   ngOnInit() {
+    let sub: Subscription;
     if (serializers[this.paramName]) {
-      this._subscription = this.route.queryParams
+      sub = this.route.queryParams
         .pipe(map(params => serializers[this.paramName].deserialize(params)))
         .subscribe(paramValue => {
           if (this.controls) {
-            this.valueAccessor.writeValue(paramValue);
-           
+            this.valueAccessor?.writeValue(paramValue);
+
           } else {
             this.renderer.setProperty(
               this.el.nativeElement,
-              "value",
+              'value',
               paramValue
             );
           }
         });
     } else {
-      this._subscription = this.route.queryParams
+      sub = this.route.queryParams
         .pipe(
           distinctUntilKeyChanged(this.paramName),
-          map(queryParams => queryParams[this.paramName] || "")
+          map(queryParams => queryParams[this.paramName] || '')
         )
         .subscribe(paramValue => {
-          this.renderer.setProperty(this.el.nativeElement, "value", paramValue);
+          this.renderer.setProperty(this.el.nativeElement, 'value', paramValue);
         });
     }
+    this._subscription.add(sub);
+  }
+
+  ngOnDestroy() {
+    this._subscription.unsubscribe();
   }
 }
 
-export function selectValueAccessor(
+export const selectValueAccessor = (
   dir: NgControl,
   valueAccessors: ControlValueAccessor[]
-): ControlValueAccessor | null {
-  if (!valueAccessors) return null;
+): ControlValueAccessor | null => {
+  if (!valueAccessors) { return null; }
 
-  if (!Array.isArray(valueAccessors))
+  if (!Array.isArray(valueAccessors)) {
     _throwError(
       dir,
-      "Value accessor was not provided as an array for form control with"
+      'Value accessor was not provided as an array for form control with'
     );
+  }
 
-  let defaultAccessor: ControlValueAccessor | undefined = undefined;
-  let builtinAccessor: ControlValueAccessor | undefined = undefined;
-  let customAccessor: ControlValueAccessor | undefined = undefined;
+  let defaultAccessor: ControlValueAccessor | undefined;
+  let builtinAccessor: ControlValueAccessor | undefined;
+  let customAccessor: ControlValueAccessor | undefined;
 
   valueAccessors.forEach((v: ControlValueAccessor) => {
     if (v.constructor === DefaultValueAccessor) {
       defaultAccessor = v;
     } else if (isBuiltInAccessor(v)) {
-      if (builtinAccessor)
+      if (builtinAccessor) {
         _throwError(
           dir,
-          "More than one built-in value accessor matches form control with"
+          'More than one built-in value accessor matches form control with'
         );
+      }
       builtinAccessor = v;
     } else {
-      if (customAccessor)
+      if (customAccessor) {
         _throwError(
           dir,
-          "More than one custom value accessor matches form control with"
+          'More than one custom value accessor matches form control with'
         );
+      }
       customAccessor = v;
     }
   });
 
-  if (customAccessor) return customAccessor;
-  if (builtinAccessor) return builtinAccessor;
-  if (defaultAccessor) return defaultAccessor;
+  if (customAccessor) { return customAccessor; }
+  if (builtinAccessor) { return builtinAccessor; }
+  if (defaultAccessor) { return defaultAccessor; }
 
-  _throwError(dir, "No valid value accessor for form control with");
+  _throwError(dir, 'No valid value accessor for form control with');
   return null;
-}
+};
 
-function _throwError(dir: AbstractControlDirective, message: string): void {
-  let messageEnd: string;
-  if (dir.path!.length > 1) {
-    messageEnd = `path: '${dir.path!.join(" -> ")}'`;
-  } else if (dir.path![0]) {
-    messageEnd = `name: '${dir.path}'`;
-  } else {
-    messageEnd = "unspecified name attribute";
+const _throwError = (dir: AbstractControlDirective, message: string): void => {
+  let messageEnd = 'unspecified name attribute';
+  if (dir.path) {
+    if (dir.path?.length > 1) {
+      messageEnd = `path: '${dir.path.join(' -> ')}'`;
+    } else if (dir.path[0]) {
+      messageEnd = `name: '${dir.path}'`;
+    }
   }
   throw new Error(`${message} ${messageEnd}`);
-}
+};
 
 const BUILTIN_ACCESSORS = [
   CheckboxControlValueAccessor,
@@ -186,6 +209,5 @@ const BUILTIN_ACCESSORS = [
   RadioControlValueAccessor
 ];
 
-function isBuiltInAccessor(valueAccessor: ControlValueAccessor): boolean {
-  return BUILTIN_ACCESSORS.some(a => valueAccessor.constructor === a);
-}
+const isBuiltInAccessor = (valueAccessor: ControlValueAccessor): boolean =>
+  BUILTIN_ACCESSORS.some(a => valueAccessor.constructor === a);
