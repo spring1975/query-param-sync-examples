@@ -1,4 +1,3 @@
-import appVersion from '../app-version.json';
 
 // This file can be replaced during build by using the `fileReplacements` array.
 // `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
@@ -6,7 +5,6 @@ import appVersion from '../app-version.json';
 
 export const environment = {
     production: false,
-    appVersion
 };
 
 /*
